@@ -56,19 +56,25 @@ class Downloader:
 	def my_hook(self, data):
 		if data['status'] == 'finished':
 			return
-		total = data.get("total_bytes", data.get("total_bytes_estimate", 0))
-		if total == 0 or total is None:
+		total_bytes = data.get("total_bytes")
+		if total_bytes is None:
+			total_bytes = data.get("total_bytes_estimate")
+		if total_bytes is None:
+			total_bytes = 0
+		downloaded_bytes = data.get("downloaded_bytes") or 0
+		if total_bytes == 0:
 			percent = 0
 		else:
-			percent = (data["downloaded_bytes"] / total) * 100
+			percent = (downloaded_bytes / total_bytes) * 100
 		try:
 			percent = int(percent) # converted to integer
 		except ValueError:
 			percent = 0
-		total = self.get_proper_count(total)
-		downloaded = self.get_proper_count(data["downloaded_bytes"])
-		remaining = self.get_proper_count(data.get("total_bytes", data.get("total_bytes_estimate"))-data["downloaded_bytes"])
-		speed = data['speed'] if data['speed'] else 0
+		total = self.get_proper_count(total_bytes)
+		downloaded = self.get_proper_count(downloaded_bytes)
+		remaining_bytes = max(total_bytes - downloaded_bytes, 0)
+		remaining = self.get_proper_count(remaining_bytes)
+		speed = data.get('speed') or 0
 		speed = self.get_proper_count(int(speed))
 		info = [_("Percentage: {}%").format(percent), _("Total Size: {} {}").format(total[0], total[1]), _("Downloaded: {} {}").format(downloaded[0], downloaded[1]), _("Remaining: {} {}").format(remaining[0], remaining[1]), _("Speed: {} {}").format(speed[0], speed[1])]
 		# updating controls 
